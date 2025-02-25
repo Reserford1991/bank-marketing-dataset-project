@@ -43,24 +43,6 @@ conda-meta/
 *.cache
 
 # ==============================
-# Data & Large Files (Datasets, Models, Checkpoints)
-# ==============================
-data/
-datasets/
-*.csv
-*.tsv
-*.parquet
-*.json
-*.xlsx
-*.h5
-*.hdf5
-*.pkl
-*.pickle
-*.joblib
-*.npy
-*.npz
-
-# ==============================
 # Logs & Debugging
 # ==============================
 logs/
