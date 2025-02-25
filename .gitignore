@@ -1,0 +1,68 @@
+# ==============================
+# General Python ignores
+# ==============================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+*.egg-info/
+*.egg
+
+# ==============================
+# PyCharm IDE specific ignores
+# ==============================
+.idea/
+*.iml
+workspace.xml
+tasks.xml
+shelf/
+logs/
+scratch/
+__pycache__/
+
+# ==============================
+# Jupyter Notebooks
+# ==============================
+.ipynb_checkpoints/
+**/.ipynb_checkpoints
+
+# ==============================
+# Virtual environments
+# ==============================
+.venv/
+env/
+venv/
+pip-log.txt
+pip-delete-this-directory.txt
+conda-meta/
+*.conda
+*.ipynb_checkpoints
+*.cache
+
+# ==============================
+# Data & Large Files (Datasets, Models, Checkpoints)
+# ==============================
+data/
+datasets/
+*.csv
+*.tsv
+*.parquet
+*.json
+*.xlsx
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+*.joblib
+*.npy
+*.npz
+
+# ==============================
+# Logs & Debugging
+# ==============================
+logs/
+*.log
+*.out
