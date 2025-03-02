@@ -1,11 +1,13 @@
+import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from ydata_profiling import ProfileReport
+from typing import List
 import warnings
 warnings.filterwarnings("ignore")
 
-class TransformFunctions:
+class HelperFunctions:
     def __init__(self):
         return
 
@@ -16,6 +18,7 @@ class TransformFunctions:
 
         :param df: The raw DataFrame containing data.
         :param filename: The filename to save the report to.
+
         :return: None
         """
 
@@ -30,6 +33,7 @@ class TransformFunctions:
         :param df: The raw DataFrame containing data.
         :param column_name: The column name to save the report to.
         :param n_bins: The number of bins to use for the histogram.
+
         :return: None
         """
 
@@ -55,8 +59,11 @@ class TransformFunctions:
     def show_categorical_info(df: pd.DataFrame, column_name: str) -> None:
         """
         Function to show categorical column information.
+
         :param df: The DataFrame containing data.
         :param column_name: The categorical column name to analyze.
+
+        :return: None
         """
 
         print(df[column_name].describe())
@@ -92,3 +99,45 @@ class TransformFunctions:
 
         # Show plot
         plt.show()
+
+        print(df[column_name].dtype)
+
+    @staticmethod
+    def impute_categorical_unknown_values(df: pd.DataFrame, column_name: str, strategy: str) -> pd.DataFrame:
+        """
+        This function imputes categorical columns with unknown values.
+
+        :param df: The raw DataFrame containing data.
+        :param column_name: The column name to impute.
+
+        :return: The imputed DataFrame.
+        """
+        df[column_name] = df[column_name].replace('unknown', np.nan)
+
+        match strategy:
+            case "mode":
+                mode = df[column_name].mode()[0]
+                df[column_name].fillna(mode, inplace=True)
+
+            case _:
+                print (f"[INFO] invalid imputation strategy '{strategy}'. No imputation will be performed. Supported strategies: ['mode']")
+
+        return df
+
+    @staticmethod
+    def transform_string_into_category_type(df: pd.DataFrame, column_names: List[str]) -> pd.DataFrame:
+        """
+        This function transforms categorical column into a categorical column.
+        :param df:
+        :param column_name:
+
+        :return: transformed DataFrame.
+        """
+
+        for column_name in column_names:
+            if column_name in df.columns:
+                df[column_name] = df[column_name].astype('category')
+
+        return df
+
+
