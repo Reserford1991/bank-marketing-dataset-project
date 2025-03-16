@@ -129,7 +129,7 @@ class HelperFunctions:
         """
         This function transforms categorical column into a categorical column.
         :param df:
-        :param column_name:
+        :param column_names:
 
         :return: transformed DataFrame.
         """
@@ -141,3 +141,18 @@ class HelperFunctions:
         return df
 
 
+    @staticmethod
+    def transform_right_skewed_numerical_column(df: pd.DataFrame, column_name: str) -> pd.DataFrame:
+        """
+        This function transforms categorical column into a categorical column.
+        :param df:
+        :param column_name:
+
+        :return: transformed DataFrame.
+        """
+
+
+        new_column_name = f"{column_name}_capped"
+        threshold = df[column_name].quantile(0.99)
+        df[new_column_name] = np.where(df[column_name] >= threshold, threshold, df[column_name])
+        return df
