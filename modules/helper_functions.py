@@ -3,7 +3,9 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from ydata_profiling import ProfileReport
-from typing import List
+from typing import Tuple, Dict, List
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, PolynomialFeatures, OneHotEncoder
+from scipy.stats import shapiro
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -128,6 +130,7 @@ class HelperFunctions:
     def transform_string_into_category_type(df: pd.DataFrame, column_names: List[str]) -> pd.DataFrame:
         """
         This function transforms categorical column into a categorical column.
+
         :param df:
         :param column_names:
 
@@ -145,8 +148,9 @@ class HelperFunctions:
     def transform_right_skewed_numerical_column(df: pd.DataFrame, column_name: str) -> pd.DataFrame:
         """
         This function transforms categorical column into a categorical column.
-        :param df:
-        :param column_name:
+
+        :param df: raw DataFrame containing data.
+        :param column_name: name of the column to transform.
 
         :return: transformed DataFrame.
         """
@@ -156,3 +160,83 @@ class HelperFunctions:
         threshold = df[column_name].quantile(0.99)
         df[new_column_name] = np.where(df[column_name] >= threshold, threshold, df[column_name])
         return df
+
+    @staticmethod
+    def handle_outliers(df: pd.DataFrame, numerical_cols: List[str]) -> pd.DataFrame:
+        """
+        Function to handle outliers
+
+        :param df: raw DataFrame containing data.
+        :param numerical_cols: list of numerical columns.
+
+        :return: transformed DataFrame.
+        """
+        for col in numerical_cols:
+            Q1 = df[col].quantile(0.25)
+            Q3 = df[col].quantile(0.75)
+            IQR = Q3 - Q1
+            lower_bound = Q1 - 1.5 * IQR
+            upper_bound = Q3 + 1.5 * IQR
+            df[col] = np.where(df[col] > upper_bound, upper_bound, df[col])
+            df[col] = np.where(df[col] < lower_bound, lower_bound, df[col])
+        return df
+
+    @staticmethod
+    def scale_features(df: pd.DataFrame, numerical_cols: List[str], threshold: float = 0.05) -> Tuple[pd.DataFrame, Dict[str, List[str]]]:
+        """
+        Function to scale numerical columns.
+
+        :param df: raw DataFrame containing data.
+        :param numerical_cols:
+        :param threshold:
+        :return:
+        """
+        df_scaled = df.copy()
+        min_max_scaler = MinMaxScaler()
+        standard_scaler = StandardScaler()
+
+        min_max_cols = []
+        standard_cols = []
+
+        for col in numerical_cols:
+            ## shapiro test for normality
+            stat, p = shapiro(df[col].sample(500) if len(df[col]) > 500 else df[col])
+
+            ## If normally distributed - use StandardScaler
+            if p > threshold:
+                df_scaled[col] = standard_scaler.fit_transform(df[col].values.reshape(-1, 1))
+                standard_cols.append(col)
+            ## Otherwise use MinMaxScaler
+            else:
+                df_scaled[col] = min_max_scaler.fit_transform(df[col].values.reshape(-1, 1))
+                min_max_cols.append(col)
+
+        return df_scaled, {"min_max_scaled_cols": min_max_cols, "standard_scaled_cols": standard_cols}
+
+    @staticmethod
+    def process_data_for_linear_regression(df: pd.DataFrame, target_col):
+        numeric_cols = df.select_dtypes(include=['int64', 'float64']).columns.tolist()  # <- convert to list
+        categorical_cols = df.select_dtypes(include=['object', 'category']).columns.tolist()
+
+        if target_col in numeric_cols:
+            numeric_cols.remove(target_col)
+
+        # 1. Handle outliers
+        df = HelperFunctions.handle_outliers(df, numeric_cols)
+
+        # 2. Scale features
+        df_scaled, scaler_info = HelperFunctions.scale_features(df, numeric_cols)
+
+        # 3. One-hot encode categorical features
+        encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+        encoded_cat = encoder.fit_transform(df[categorical_cols])  # <- you forgot to call the encoder here
+        encoded_cat_df = pd.DataFrame(encoded_cat, columns=encoder.get_feature_names_out(categorical_cols),
+                                      index=df.index)
+
+        # 4. Combine numerical and encoded categorical features
+        processed_df = pd.concat([df_scaled[numeric_cols], encoded_cat_df], axis=1)
+
+        # 5. Separate target column
+        target = df_scaled[target_col]
+
+        return processed_df, target, scaler_info
