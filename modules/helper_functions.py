@@ -235,6 +235,9 @@ class HelperFunctions:
         if target_col in numeric_cols:
             numeric_cols.remove(target_col)
 
+        if target_col in categorical_cols:
+            categorical_cols.remove(target_col)
+
         # 1. Handle outliers
         df = HelperFunctions.handle_outliers(df, numeric_cols)
 
@@ -271,6 +274,9 @@ class HelperFunctions:
         if target_col in numeric_cols:
             numeric_cols.remove(target_col)
 
+        if target_col in categorical_cols:
+            categorical_cols.remove(target_col)
+
         # 2. Outlier Handling
         bank_df = HelperFunctions.handle_outliers(df, numeric_cols)
 
@@ -290,3 +296,34 @@ class HelperFunctions:
         target = bank_df[target_col]
 
         return processed_df, target, scaler_info
+
+    @staticmethod
+    def preprocess_for_decision_tree(df: pd.DataFrame, target_col) -> tuple[DataFrame, Any]:
+        """
+        Function to preprocess the raw data for decision tree.
+
+        :param df: input DataFrame
+        :param target_col: name of the target column
+        :return: Tuple (X, y)
+        """
+
+        number_cols = df.select_dtypes(include=['int64', 'float64']).columns.tolist()
+        categorical_cols = df.select_dtypes(include=['object', 'category']).columns.tolist()
+
+        if target_col in number_cols:
+            number_cols.remove(target_col)
+        if target_col in categorical_cols:
+            categorical_cols.remove(target_col)
+
+        encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+        encoded_cat = encoder.fit_transform(df[categorical_cols])
+        encoded_cat_df = pd.DataFrame(
+            encoded_cat,
+            columns=encoder.get_feature_names_out(categorical_cols),
+            index=df.index
+        )
+
+        X = pd.concat([df[number_cols], encoded_cat_df], axis=1)
+        y = df[target_col]
+
+        return X, y
